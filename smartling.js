@@ -129,7 +129,9 @@ SmartlingSdk.OPERATIONS = {
   LIST: '/file/list',
   STATUS: '/file/status',
   RENAME: '/file/rename',
-  DELETE: '/file/delete'
+  DELETE: '/file/delete',
+  // Projects
+  LOCALES: '/project/locale/list'
 };
 
 /**
@@ -447,6 +449,32 @@ SmartlingSdk.prototype.delete = function (fileUri) {
 
   //Make the request
   request.del(requestParams, getStandardSmartlingRequestHandler(deferred));
+
+  //return the promise
+  return deferred.promise;
+};
+
+/**
+ * Returns the enabled locales and identifiers for the project
+ *
+ * https://docs.smartling.com/display/docs/Projects+API(GET)
+ *
+ * @returns {promise}
+ */
+SmartlingSdk.prototype.locales = function () {
+  //create a defered object to return
+  var deferred = Q.defer();
+
+  //assemble the request URL
+  var requestUrl = this.getSmartlingRequestPath(SmartlingSdk.OPERATIONS.LOCALES);
+
+  var requestParams = {
+    url: requestUrl,
+    json: true
+  };
+
+  //Make the request
+  request.get(requestParams, getStandardSmartlingRequestHandler(deferred));
 
   //return the promise
   return deferred.promise;

@@ -223,4 +223,16 @@ describe('SmartlingSdk', function() {
         done();
       });
   });
+
+  it('should get a list of enabled locales and identifiers for the project', function(done){
+    sdk.locales()
+      .then(function(response) {
+        expect(response.locales.length).to.not.equal(0);
+        done();
+      })
+      .fail(function(err) {
+        console.log(err);
+        done(false);
+      });
+  });
 });
