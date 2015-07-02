@@ -17,6 +17,7 @@ var fs = require('fs'),
     mkdirp = require('mkdirp'),
     request = require('request'),
     Q = require('q'),
+    parseString = require('xml2js').parseString,
     _ = require('lodash');
 
 
@@ -63,7 +64,6 @@ var jsonToSearchParameterString = function(jsonObject) {
 
 function handleSmartlingResponse(response, deferred) {
   var smartlingResponse = response.response;
-  //console.log('smartlingResponse', smartlingResponse);
   if (smartlingResponse && smartlingResponse.code && smartlingResponse.code === 'SUCCESS') {
     deferred.resolve(smartlingResponse.data);
   } else {
@@ -71,8 +71,46 @@ function handleSmartlingResponse(response, deferred) {
   }
 }
 
+function getTmx2JsonSmartlingRequestHandler(deferred, type) {
+  return function (error, response, body) {
+    var errorObject = {
+      message: "An unknown error occurred"
+    };
+    if (!error && response.statusCode == 200) {
+      var data = body;
+      if (_.isString(data)) {
+        try {
+          parseString(data, function(err, parsed){
+
+            if(err) {
+              deferred.reject(errorObject);
+            }
+
+            if (type == "json") {
+              deferred.resolve(JSON.stringify(parsed));
+            } else {
+              deferred.resolve(parsed);
+            }
+          });
+        } catch (err) {};
+      }
+    } else {
+
+      if (body && body.response) {
+        errorObject = body.response;
+      } else if (error) {
+        errorObject = error;
+      }
+
+      deferred.reject(errorObject);
+    }
+  };
+  
+}
+
 function getStandardSmartlingRequestHandler(deferred) {
   return function (error, response, body) {
+    console.log(body)
     if (!error && response.statusCode == 200) {
       var data = body;
       if (_.isString(data)) {
@@ -96,6 +134,8 @@ function getStandardSmartlingRequestHandler(deferred) {
     }
   };
 }
+
+
 
 /**
  * Initializes Smartling with the given params
@@ -124,12 +164,16 @@ SmartlingSdk.API_BASE_URLS = {
  * Hash of available Smartling operations
  */
 SmartlingSdk.OPERATIONS = {
+  // Files API
   UPLOAD: '/file/upload',
   GET: '/file/get',
   LIST: '/file/list',
   STATUS: '/file/status',
   RENAME: '/file/rename',
-  DELETE: '/file/delete'
+  DELETE: '/file/delete',
+  // Download Translations API
+  DOWNLOAD: '/translations/download',
+  DOWNLOAD_GLOSSARY: '/glossary/download'
 };
 
 /**
@@ -452,5 +496,68 @@ SmartlingSdk.prototype.delete = function (fileUri) {
   return deferred.promise;
 };
 
+SmartlingSdk.prototype.download = function (options) {
+  var deferred = Q.defer();
+
+  //setup default request params
+  var defaultParams = {
+    dataSet: "full",
+    format: "json"
+  };
+
+  _.extend(defaultParams, options);
+
+  // just store format for use bellow
+  // but the api support only "tmx"
+  var oldFormat = defaultParams.format;
+  defaultParams.format = "tmx";
+
+  //assemble the request URL
+  var requestUrl = this.getSmartlingRequestPath(SmartlingSdk.OPERATIONS.DOWNLOAD, defaultParams);
+  
+  var requestParams = {
+    url: requestUrl,
+    body: defaultParams,
+    json: true
+  };
+
+  if ( oldFormat == "tmx" ) {
+    //Make the request
+    request.get(requestParams, getStandardSmartlingRequestHandler(deferred));
+  } else {
+    var type = oldFormat=="json"?"json":"object";
+    request.get(requestParams, getTmx2JsonSmartlingRequestHandler(deferred, type));
+  }
+
+  //return the promise
+  return deferred.promise;
+}
+
+SmartlingSdk.prototype.downloadGlossary = function (options) {
+  var deferred = Q.defer();
+
+  //setup default request params
+  var defaultParams = {
+    exportType: "csv",
+    locales: ""
+  };
+
+  _.extend(defaultParams, options);
+
+  //assemble the request URL
+  var requestUrl = this.getSmartlingRequestPath(SmartlingSdk.OPERATIONS.DOWNLOAD_GlOSSARY, defaultParams);
+  
+  var requestParams = {
+    url: requestUrl,
+    body: defaultParams,
+    json: true
+  };
+
+  //Make the request
+  request.get(requestParams, getStandardSmartlingRequestHandler(deferred));
+
+  //return the promise
+  return deferred.promise;
+}
 //Export the SmartlingSdk Class
 module.exports = SmartlingSdk;

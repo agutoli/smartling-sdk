@@ -101,6 +101,21 @@ describe('SmartlingSdk', function() {
       });
   });
 
+  it('should donwload all translations', function(done){
+    sdk.download()
+      .then(function(response) {
+        expect(response.hasOwnProperty('tmx')).to.equal(true);
+        expect(response.tmx.hasOwnProperty('header')).to.equal(true);
+        expect(response.tmx.hasOwnProperty('body')).to.equal(true);
+        expect(response.tmx.body.hasOwnProperty('length')).to.equal(true);
+        done();
+      })
+      .fail(function(err) {
+        console.log(err);
+        done(false);
+      });
+  });
+
   it('should upload a file', function(done){
    sdk.upload(TEST_UPLOAD_JSON_PATH, TEST_UPLOAD_JSON_URI, 'json')
       .then(function(uploadInfo) {
