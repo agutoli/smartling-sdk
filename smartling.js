@@ -105,12 +105,11 @@ function getTmx2JsonSmartlingRequestHandler(deferred, type) {
       deferred.reject(errorObject);
     }
   };
-  
+
 }
 
 function getStandardSmartlingRequestHandler(deferred) {
   return function (error, response, body) {
-    console.log(body)
     if (!error && response.statusCode == 200) {
       var data = body;
       if (_.isString(data)) {
@@ -197,8 +196,6 @@ SmartlingSdk.prototype.getSmartlingRequestPath = function(operation, smartlingPa
   var requestUrl = this.config.apiBaseUrl + operation;
   requestUrl += '?' + jsonToSearchParameterString(params);
 
-  //console.log('requestUrl', requestUrl);
-
   return requestUrl;
 };
 
@@ -230,7 +227,6 @@ SmartlingSdk.prototype.getSmartlingRequestPath = function(operation, smartlingPa
  * @return {promise}
  */
 SmartlingSdk.prototype.upload = function (filePath, fileUri, fileType, options) {
-  //console.log('upload:filePath', filePath);
   //create a defered object to return
   var deferred = Q.defer();
 
@@ -309,7 +305,6 @@ SmartlingSdk.prototype.get = function (fileUri, filepath, options) {
   if (filepath) {
     mkdirp(path.dirname(filepath), function(err) {
       if (err) {
-        console.log(err);
         defered.reject(err);
       } else {
         //create a new writestream for the file
@@ -471,7 +466,6 @@ SmartlingSdk.prototype.rename = function (fileUri, newFileUri) {
  * @returns {promise}
  */
 SmartlingSdk.prototype.delete = function (fileUri) {
-  //console.log('_delete:', fileUri);
   //create a defered object to return
   var deferred = Q.defer();
 
@@ -514,7 +508,7 @@ SmartlingSdk.prototype.download = function (options) {
 
   //assemble the request URL
   var requestUrl = this.getSmartlingRequestPath(SmartlingSdk.OPERATIONS.DOWNLOAD, defaultParams);
-  
+
   var requestParams = {
     url: requestUrl,
     body: defaultParams,
@@ -546,7 +540,7 @@ SmartlingSdk.prototype.downloadGlossary = function (options) {
 
   //assemble the request URL
   var requestUrl = this.getSmartlingRequestPath(SmartlingSdk.OPERATIONS.DOWNLOAD_GlOSSARY, defaultParams);
-  
+
   var requestParams = {
     url: requestUrl,
     body: defaultParams,
